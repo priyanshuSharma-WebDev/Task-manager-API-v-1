@@ -1,10 +1,20 @@
 const express = require("express");
 const {UserModel,TaskModel} = require("../DB/models");
 const router = new express.Router();
+const Authentication = require("../auth/auth")
 
 
-router.post("/", async (req,res) => {
-    const task = new TaskModel(req.body);
+
+router.post("/",Authentication, async (req,res) => {
+
+    // this solution is also correct
+    // const task = new TaskModel(req.body);
+    // task.owner = req.user._id;
+
+    const task = new TaskModel({
+        ...req.body,
+        owner: req.user._id
+    })
 
     try {
         const Task = await task.save();
@@ -16,11 +26,29 @@ router.post("/", async (req,res) => {
 })
 
 
-router.get("/", async (req,res) => {
+router.get("/",Authentication, async (req,res) => {
 
     try {
-        const task = await TaskModel.find({});
-        res.json(task)
+        // fine approch
+        // const task = await TaskModel.find({"owner": req.user._id});
+
+        await req.user.populate("tasks").execPopulate()
+        res.json(req.user.tasks)
+    }
+    catch(e) {
+        res.status(500).send(e)
+    }
+})
+
+router.get("/:id",Authentication, async (req,res) => {
+    const _id = req.params.id;
+    try {
+        const task = await TaskModel.findOne({_id, owner: req.user._id})
+        if(task === null) {
+            res.status(404);
+        }
+
+        res.send(task);
     }
     catch(e) {
         res.status(500).send(e)
@@ -28,9 +56,11 @@ router.get("/", async (req,res) => {
 })
 
 
-router.patch("/:id",async (req,res) => {
+
+router.patch("/:id",Authentication,async (req,res) => {
+    const _id = req.params.id;
     const keys = Object.keys(req.body);
-    const allowedUpdates = ["description","completed"];
+    const allowedUpdates = ["name","description","completed"];
     const isallowed = keys.every(key => allowedUpdates.includes(key));
 
     if(!isallowed) {
@@ -40,13 +70,19 @@ router.patch("/:id",async (req,res) => {
     }
 
     try {
-        const updateTask = await TaskModel.findByIdAndUpdate(req.params.id,req.body,{new: true, runValidators: true});
-        if(!updateTask) {
+        // const updateTask = await TaskModel.findByIdAndUpdate(req.params.id,req.body,{new: true, runValidators: true});
+        const task = await TaskModel.findOne({_id,"owner": req.user._id})
+
+        if(!task) {
            return  res.status(404).json({
                 "error": "Task is not found to update"
             })
         }
-        res.send(updateTask)
+
+        keys.forEach(update => task[update] = req.body[update]);
+        await task.save();
+
+        res.send(task)
     }
     catch (e) {
         res.status(500).send(e);
@@ -56,16 +92,19 @@ router.patch("/:id",async (req,res) => {
 
 
 
-router.delete("/:id",async (req,res) => {
+router.delete("/:id",Authentication,async (req,res) => {
+    const _id = req.params.id;
     try {
-        const deletedTask = await TaskModel.findByIdAndDelete(req.params.id);
+        const task = await TaskModel.findOneAndDelete({_id, owner: req.user._id})
 
-        if(!deletedTask) {
+        if(!task) {
             res.status(404).send({
                 "error": "There is no task to delete!"
             })
         }
-        res.send(deletedTask)
+
+
+        res.send(task)
     }
     catch(e) {
         res.status(500).send(e);

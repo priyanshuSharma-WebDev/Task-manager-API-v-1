@@ -56,6 +56,19 @@ const UserSchema = new mongoose.Schema({
     }]
 })
 
+// here I will set relationship between user and task so I will use known as virtual property (A virtual property is not actual data that store in database it's a relationship between two entites "here I have user and task two entites" ) we pass it two arguments 1 name like "tasks" and second is object
+UserSchema.virtual('tasks',{
+    // here we have relationship virtual - [This is not store in database. It is just for mongoose to able figure out who owns what and how they're related.]
+    ref: 'task',
+
+    // the local field is where the local data is stored in this case is "_id" So the _id is relationship is task and owner field 
+    localField: "_id",
+
+    // so the foreign field is the name of the field On the other thing in this case on the task that's going to create this relationship and we set that up to be the "owner".
+    foreignField: "owner"
+
+})
+
 
 // attaching a custom method of the instense of user model {the "methods" method is use for instenses }
 UserSchema.methods.generateJsonWebToken = async function() {
@@ -95,6 +108,11 @@ UserSchema.pre("save",async function(next) {
 
 
 const TaskSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        trim: true,
+        required: true
+    },
     description: {
         type: String,
         required: true,
@@ -103,11 +121,20 @@ const TaskSchema = new mongoose.Schema({
     completed: {
         type: Boolean,
         default: false
+    },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        // add user model reference in owner field to create relationship
+        ref: 'user'
     }
 })
 
 // creating models
 const UserModel = mongoose.model("user",UserSchema);
 const TaskModel = mongoose.model("task",TaskSchema);
+
+
+
 
 module.exports = {UserModel,TaskModel};
