@@ -12,6 +12,8 @@ router.post("/",Authentication, async (req,res) => {
     // task.owner = req.user._id;
 
     const task = new TaskModel({
+
+        // ES6 destructuring method mean(get all information of the task ex: name,description and completed of task)
         ...req.body,
         owner: req.user._id
     })
@@ -26,13 +28,40 @@ router.post("/",Authentication, async (req,res) => {
 })
 
 
+// GET - via completed or incompleted task
+// GET - via limited task or skip some tasks aka(limit,skip)
+// GET - via asending or decending order
 router.get("/",Authentication, async (req,res) => {
+    
+    const match = {};
+    const sort = {
+        createdAt: 1
+    };
+    const startDate = new Date(req.query.startDate);
+    const endDate = new Date(req.query.endDate);
 
     try {
         // fine approch
         // const task = await TaskModel.find({"owner": req.user._id});
 
-        await req.user.populate("tasks").execPopulate()
+        if(req.query.completed) {
+            match.completed = req.query.completed === 'true'
+        }
+
+        if(req.query.sortBy) {
+           const part = req.query.sortBy;
+           sort.createdAt = part === "asc" ? 1 : -1;
+        }
+
+        await req.user.populate({
+            path: "tasks",
+            match,
+            options: {
+                limit: parseInt(req.query.limit,10),
+                skip: parseInt(req.query.skip,10),
+                sort
+            }
+        }).execPopulate()
         res.json(req.user.tasks)
     }
     catch(e) {
@@ -40,6 +69,8 @@ router.get("/",Authentication, async (req,res) => {
     }
 })
 
+
+// find a particular user by it's Id (owner: req.user._id is used for check relationship between task and user or check this is valid user or not before he access the particular task)
 router.get("/:id",Authentication, async (req,res) => {
     const _id = req.params.id;
     try {
@@ -56,7 +87,7 @@ router.get("/:id",Authentication, async (req,res) => {
 })
 
 
-
+// update task by it's id
 router.patch("/:id",Authentication,async (req,res) => {
     const _id = req.params.id;
     const keys = Object.keys(req.body);
@@ -70,7 +101,6 @@ router.patch("/:id",Authentication,async (req,res) => {
     }
 
     try {
-        // const updateTask = await TaskModel.findByIdAndUpdate(req.params.id,req.body,{new: true, runValidators: true});
         const task = await TaskModel.findOne({_id,"owner": req.user._id})
 
         if(!task) {
@@ -91,7 +121,7 @@ router.patch("/:id",Authentication,async (req,res) => {
 
 
 
-
+// delete the task by it's ID
 router.delete("/:id",Authentication,async (req,res) => {
     const _id = req.params.id;
     try {

@@ -1,9 +1,12 @@
+require("dotenv").config();
 const express = require("express");
 const { UserModel, TaskModel } = require("../DB/models");
 const router = new express.Router();
 const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
-const Authentication = require("../auth/auth")
+const Authentication = require("../auth/auth");
+// const uploadFiles = require("./userFileUpload")
+
 
 // this is also the right way to hash password
 // async function hashPassword(req,res,next) {
@@ -13,11 +16,16 @@ const Authentication = require("../auth/auth")
 //     next();
 // }
 
+
+
+
 router.post("/", async (req, res) => {
     const user = new UserModel(req.body);
     try {
 
         const User = await user.save();
+
+        // generate JWT of register request
         const jwtUser = await User.generateJsonWebToken();
         res.status(201).json({
             User,
@@ -53,7 +61,11 @@ router.get("/me", Authentication, async (req, res) => {
 
 router.post("/logout", Authentication, async (req, res) => {
     try {
+
+        // iterate tokens array to remove a particular token within that array
         req.user.tokens = req.user.tokens.filter((token) => {
+
+            // if valid token found so that condition is true so that mean token is removed
             return token.token !== req.token
         })
         await req.user.save();
@@ -67,6 +79,8 @@ router.post("/logout", Authentication, async (req, res) => {
 
 router.post("/logoutAll", Authentication, async (req, res) => {
     try {
+
+        // log out all user for devices mean -> (I will user here JWT authentication system so that user is allowed to create account with multiple devices upper logout route only logout user on particular device that user is currently used but this route is logout him all avaliable devices)
         req.user.tokens = []
         // console.log(req.user.tokens)
         await req.user.save();
@@ -81,7 +95,7 @@ router.post("/logoutAll", Authentication, async (req, res) => {
 router.get("/:id", async (req, res) => {
     try {
         const User = await UserModel.findById(req.params.id)
-        console.log(User)
+        // console.log(User)
         if (!User) {
             return res.json({
                 "error": "User not found!"
@@ -95,10 +109,18 @@ router.get("/:id", async (req, res) => {
 })
 
 
-router.patch("/updateMe",Authentication, async (req, res) => {
+router.patch("/updateMe", Authentication, async (req, res) => {
+
+    // get keys of req.body object that user send us
     const objectKeys = Object.keys(req.body);
+
+    // all properties that are allowed to updates
     const allowedUpdates = ["name", "email", "password", "age"];
+
+    // check user does not send unwanted property of the request
     const isallowed = objectKeys.every(update => allowedUpdates.includes(update));
+
+    // if user add a property that is not mention in allowedUpdates array then we send back 404 message
     if (!isallowed) {
         return res.status(404).json({
             "error": "Invalid property!"
@@ -106,11 +128,13 @@ router.patch("/updateMe",Authentication, async (req, res) => {
     }
     try {
 
-        // that is also a way to update files
+        // that is also a way to update document
         // const user = await UserModel.findById(req.user._id);
+
+        // and that is forEach way
         objectKeys.forEach(update => req.user[update] = req.body[update]);
         await req.user.save();
-z
+        z
         // const updateUser = await UserModel.findByIdAndUpdate(req.params.id, req.body,{new: true, runValidators: true});
         // if (!user) {
         //     return res.status(404).json({
@@ -139,8 +163,10 @@ router.delete("/removeme", Authentication, async (req, res) => {
         //     })
         // }
 
-        // new
+        // new way to remove user in dbs
         await req.user.remove();
+
+        // remove all tasks of that user when he/she is removed
         await TaskModel.deleteMany({ owner: req.user._id });
         res.send(req.user)
     }
