@@ -19,7 +19,7 @@ const Authentication = require("../auth/auth");
 
 
 
-router.post("/", async (req, res) => {
+router.post("/register", async (req, res) => {
     const user = new UserModel(req.body);
     try {
 
