@@ -5,7 +5,11 @@
   "main": "app.js",
   "scripts": {
     "start": "node src/app.js",
+    "test": "jest --watch --setupFiles dotenv/config --runInBand",
     "start-local": "nodemon src/app.js"
+  },
+  "jest": {
+    "testEnvironment": "node"
   },
   "author": "",
   "license": "ISC",
@@ -20,6 +24,8 @@
     "validator": "^13.1.17"
   },
   "devDependencies": {
-    "nodemon": "^2.0.4"
+    "jest": "^26.4.2",
+    "nodemon": "^2.0.4",
+    "supertest": "^5.0.0"
   }
 }

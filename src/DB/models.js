@@ -3,8 +3,11 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const JWT = require("jsonwebtoken");
+// 
 
-mongoose.connect(process.env.MONGO_CLIENT, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true }, (err) => {
+const MongoURI = process.env.MONGO_CLIENT || "mongodb://localhost:27017/testDB";
+
+mongoose.connect(MongoURI, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true }, (err) => {
     if (err) {
         return console.log("There is some error to create connection!");
     }

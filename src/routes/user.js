@@ -21,10 +21,11 @@ const Authentication = require("../auth/auth");
 
 router.post("/register", async (req, res) => {
     const user = new UserModel(req.body);
+    // console.log(user)
     try {
-
+        // console.log("Wait into all set block")
         const User = await user.save();
-
+        // console.log("Save documnet: ",User)
         // generate JWT of register request
         const jwtUser = await User.generateJsonWebToken();
         res.status(201).json({
@@ -42,7 +43,6 @@ router.post("/login", async (req, res) => {
     try {
         // .findByCardentials is a custom method that I will attach with mongoose schema and use it like other mongoose method like : findById or find
         const getUser = await UserModel.findByCradentials(req.body.email, req.body.password);
-
         // generation json web toke for user who try to login
         const jwtUser = await getUser.generateJsonWebToken();
         res.send({ getUser, jwtUser })

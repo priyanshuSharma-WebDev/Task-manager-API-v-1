@@ -10,6 +10,7 @@ router.post("/",Authentication, async (req,res) => {
     // this solution is also correct
     // const task = new TaskModel(req.body);
     // task.owner = req.user._id;
+    console.log("I think this line should run")
 
     const task = new TaskModel({
 
