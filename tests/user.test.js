@@ -3,6 +3,7 @@ const app = require("../src/index");
 const JWT = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const { UserModel, TaskModel } = require("../src/DB/models")
+const config = require("./jestConfign")
 
 
 
